@@ -1,0 +1,23 @@
+,
+"EventRule1" : {
+"Type" : "AWS::Events::Rule",
+"Properties" : {
+"Description" : "Rule to monitor instance state",
+"EventPattern" : {
+"source": [
+"aws.ec2"
+],
+"detail-type": [
+"EC2 Instance State-change Notification"
+],
+"detail": {
+"state": [
+"stopping"
+]
+}
+},
+"Name" : "EventRule1",
+"State" : "ENABLED",
+"Targets" : [{"Ref" :  "SNSTopic"}]
+}
+}

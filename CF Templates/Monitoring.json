@@ -1,0 +1,91 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "This template will create an SNS topic and SNS subscription, as well as basic cloudwatch monitors. Sample creates an alarm that notifies when average cpu exceeds 10 percent for more than 60 seconds over one evaluation period.",
+
+  "Parameters" : {
+    "TopicName": {
+      "Description" : "Name of SNS Topic",
+      "Type": "String",
+      "Default" : "TestTopicExample"
+    },
+    "SubscriptionEmail": {
+      "Description" : "Email Address for subscription",
+      "Type": "String",
+      "Default" : "suydamjacob@gmail.com"
+    },
+    "InstanceToMonitor": {
+      "Description" : "Instance to Monitor",
+      "Type": "String",
+      "Default" : "i-0a3d94424a6dc8d74"
+    }
+  },
+
+  "Resources" : {
+
+    "SNSTopic" : {
+      "Type" : "AWS::SNS::Topic",
+      "Properties" : {
+        "DisplayName" : {"Ref" :  "TopicName"},
+        "TopicName" : {"Ref" :  "TopicName"}
+      }
+    },
+    "SNSSubscription" : {
+      "Type" : "AWS::SNS::Subscription",
+      "Properties" : {
+        "Endpoint" : {"Ref" :  "SubscriptionEmail"},
+        "Protocol" : "email",
+        "TopicArn": {"Ref" :  "SNSTopic"}
+      }
+    },
+    "CPUAlarm1" : {
+      "Type" : "AWS::CloudWatch::Alarm",
+      "Properties" : {
+        "AlarmName" : "Appname-CPUAlarm1",
+        "AlarmDescription" : "CloudFormation",
+        "ComparisonOperator" : "GreaterThanOrEqualToThreshold",
+        "MetricName" : "CPUUtilization",
+        "Namespace" : "AWS/EC2",
+        "Dimensions" : [ {
+          "Name" : "InstanceId",
+          "Value" : {"Ref" :  "InstanceToMonitor"}
+        }],
+        "Period" : "300",
+        "EvaluationPeriods": "1",
+        "Statistic" : "Average",
+        "Threshold" : "10",
+        "AlarmActions" : [{"Ref" :  "SNSTopic"}]
+      }
+    },
+    "EventRule1" : {
+      "Type" : "AWS::Events::Rule",
+      "Properties" : {
+        "Description" : "Rule to monitor instance state",
+        "EventPattern" : {
+          "source": [
+            "aws.ec2"
+          ],
+          "detail-type": [
+            "EC2 Instance State-change Notification"
+          ],
+          "detail": {
+            "state": [
+              "stopping"
+            ],
+            "instance-id": [
+              "i-0a3d94424a6dc8d74"
+            ]
+          }
+        },
+        "Name" : "EventRule1",
+        "State" : "ENABLED",
+        "Targets" : [
+          {
+            "Arn": { "Ref": "SNSTopic" },
+            "Id": { "Ref": "TopicName" }
+          }
+        ]
+      }
+    }
+  }
+}
